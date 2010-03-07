@@ -1,0 +1,13 @@
+?[a    # store input char to mem[a] 
+-48[a  # convert ascii value of char to numerical value
+?b     # store input char to b
+-48b   # convert ascii value of char to numerical value
+{!b    # begin multiplication loop exit if b is zero
+ )b    # push b onto the stack
+ >1b   # set b to 1
+ +[a[b # add mem[a] to mem[b] and store in mem[b]
+ (b    # pull b off the stack
+ -1b   # decrement b
+}      # end loop
++1b    # increment b. it now points to mem[1] where we have the result
+'[b    # print value of mem[b]

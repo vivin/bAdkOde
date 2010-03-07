@@ -1,0 +1,22 @@
+*ZERO=0;
+*ONE=1;
+*MANY_THERE_ARE_123=55555;
+@macro(REG) = >0REG;
+&macro(a)
+)$ZERO$
+)$ONE$
+>20a
+>a[a
+{![a
+ (a
+ (b
+ )b
+ 'b"32
+ +ab
+ (a
+ )b
+ )a
+ >20a
+ -1[a
+}
+"8"10

@@ -1,0 +1,471 @@
+# brainfuck interpreter in bAdkOde
+# written by Vivin S. Paliath
+# Started on January 2nd, 2010.
+# Modified on Jaunary 5th (at 30,000 ft!!). Fixed bugs! It works!
+# Modified on January 11th, 2010. Added comments.
+# Modified on Jaunary 23rd, 2010. Added labels.
+#
+# The script expects the end of brainfuck code to be marked by
+# an exclamation mark. Any input to the code can be appended
+# after the exclamation mark. End of program input is marked 
+# by another exclamation mark.
+#
+# Overview
+# ========
+#
+# This interpreter is pretty simple. It reads in brainfuck code
+# character by character, and stores it sequentially in memory.
+# The end of program code is marked (in memory) by a zero. The
+# interpreter also does the same for any provided program input.
+# The interpreter uses bAdkOde's memory as brainfuck memory.
+# However, this memory starts after the end of the program input.
+# Memory is wrapped, and is limited to 30,000 cells (although 
+# you can change this by changing the value of MAX_BF_MEM_CELLS.
+#
+# In addition to program code and input, the interpreter maintains 
+# three memory locations. Memory location 0 serves as a counter to
+# count square brackets (['s and ]'s). Memory location 1 contains the 
+# starting address of brainfuck memory. Finally, memory location 2 
+# contains a pointer that points to the next input character.
+
+# Memory 
+#
+#                      +-------------------------------+
+#          0           |    Counter for ['s and ]'s    |
+#                      +-------------------------------+
+#          1           | Starting address of BF memory |
+#                      +-------------------------------+
+#          2           |   Pointer to next input char  |
+#                      +-------------------------------+
+#          3           |        Brainfuck code         |
+#                      +-------------------------------+
+#                      .                               .
+#                      .                               .
+#                      +-------------------------------+
+#     CODESZ - 1       |        Brainfuck code         |
+#                      +-------------------------------+
+#       CODESZ         |              0                |
+#                      +-------------------------------+
+#     CODESZ + 1       |          Input data           |
+#                      +-------------------------------+
+#                      .                               .
+#                      .                               .
+#                      +-------------------------------+
+#   CODESZ + INPUTSZ   |          Input data           |
+#                      +-------------------------------+
+# CODESZ + INPUTSZ + 1 |   Start of brainfuck memory   |
+#                      +-------------------------------+
+#
+# Stack
+#
+# The maximum number of values that the stack holds during execution
+# is 3. What follows are pictures of the various states of the stack:
+#
+#                      I
+#     +---------------------------------+ 
+# TOP |   Pointer to brainfuck memory   |  
+#     +---------------------------------+
+#     | Currently executing instruction |
+#     +---------------------------------+
+#     | Pointer to current instruction  |
+#     +---------------------------------+
+#
+#                      II
+#     +---------------------------------+
+# TOP | Currently executing instruction |
+#     +---------------------------------+
+#     | Pointer to current instruction  |
+#     +---------------------------------+
+#
+#                     III
+#     +---------------------------------+
+# TOP | Pointer to current instruction  |
+#     +---------------------------------+
+#     | Currently executing instruction |
+#     +---------------------------------+
+#
+#                      IV
+#     +---------------------------------+
+# TOP |    Character read from STDIN    |
+#     +---------------------------------+
+#
+# Figure I is our worst-case scenario. For a detailed explanation of why
+# the stack looks like this (in the various scenarios), go through the 
+# comments in the program code. I refer back to this diagram.
+
+# Labels
+#
+# We define a few labels here, so that our code makes more sense. First,
+# we define the base 10 ASCII values for the brainfuck instructions.
+
+*EXCLAMATION = 33;
+*PLUS = 43;
+*COMMA = 44;
+*MINUS = 45;
+*PERIOD = 46;
+*LESS_THAN = 60;
+*GREATER_THAN = 62;
+*LEFT_SQUARE_BRACKET = 91;
+*RIGHT_SQUARE_BRACKET = 93;
+
+# Here we define labels for the different addresses in memory that we
+# use
+
+*ADDR_COUNTER = 0;
+*ADDR_BF_MEM_START_PTR = 1;
+*ADDR_NEXT_INPUT_CHAR_PTR = 2;
+*ADDR_BF_CODE_START_PTR = 3;
+
+# Here I define the maximum number of brainfuck memory cells we're
+# going to allow.
+
+*MAX_BF_MEM_CELLS = 30000;
+
+# Here I set up a few more labels, which simply serves to make the code
+# clearer.
+
+*CLEAR = 0;
+*NON_ZERO = 1;
+
+# Macros
+# 
+# We have one macro, called "checkbrackets". It has one parameter, called
+# "REG", which basically stands for a register. All the macro does, is 
+# look at the value in the register to see if it's a [ or a ]. If it is
+# a [, it will increment the value in memory location 0. Otherwise, it
+# decrements the value in memory location 0.
+
+@checkbrackets(REG) = )REG
+                      -$LEFT_SQUARE_BRACKET$REG{=REG
+                         +1[REG
+                         >1REG
+                      }+$LEFT_SQUARE_BRACKET$REG
+                      -$RIGHT_SQUARE_BRACKET$REG{=REG
+                        -1[REG
+                        >1REG
+                      }+$RIGHT_SQUARE_BRACKET$REG
+                      (REG;
+
+#
+# Start of program
+#
+
+# 
+# We store brainfuck code, starting at location 3. The a
+# register will be our pointer to memory. We store the value
+# 3 in register a. We will use register b to hold the character
+# that we read in from STDIN. We set it to 1 (a nonzero value)
+# because we'll be running our loop until b is zero.
+>$ADDR_BF_CODE_START_PTR$a
+>$NON_ZERO$b
+{!b
+    # We input a character from STDIN and store it to the location
+    # that the a register points to. We also check to see if the 
+    # character that we just read in is a bracket (using the checkbrackets
+    # macro). We increment our memory pointer (the a register) and then
+    # subtract $EXCLAMATION$ (the ASCII value of "!") from b. The reason we perform
+    # the subtraction, is to check whether the character we read in is 
+    # an exclamation mark. If it is, the b register will be zero and we
+    # will exit the loop
+    ?b
+    >b[a
+    &checkbrackets(b)
+    +1a
+    -$EXCLAMATION$b
+}
+
+# We ensure that the first memory location after program code is
+# zero. This is where execution must stop.
+>$CLEAR$[a
+
+# The second memory location after program code is where input
+# data starts. We store the address of this memory location to
+# memory location 2.
++1a>$ADDR_NEXT_INPUT_CHAR_PTR$b>a[b
+
+# This loop is similar to the one that reads in program code.
+# Here, we read in any input until we encounter an exclamation
+# mark.
+>$NON_ZERO$b
+{!b
+    ?b
+    >b[a
+    +1a
+    -$EXCLAMATION$b
+}
+
+# After reading input, the a register will point to the next
+# available memory location. We store the address of this location
+# to memory location 1. This is the address of the start of
+# brainfuck memory.
+>$ADDR_BF_MEM_START_PTR$b>a[b
+
+# Before we actually start interpreting the code, we need to see if we have
+# matching ['s and ]'s. We will inspect memory location 0. If it is zero,
+# it means that we are good to go. Otherwise, we print an error and exit
+>$ADDR_COUNTER$a>[aa>ab
+{=a
+ # If we're in this loop, it means that we have matching numbers of ['s 
+ # and ]'s. The first thing we do, is read in the value at memory location
+ # 1. This value is basically the beginning of brainfuck memory. We store
+ # this address into register b.
+ >$ADDR_BF_MEM_START_PTR$a>[ab
+
+ # Our a register serves as a PC for brainfuck code. We store the value 3
+ # into the a register since that is where brainfuck code starts in memory.
+ >$ADDR_BF_CODE_START_PTR$a
+
+ # Main loop
+ {![a 
+  # Save the PC (pointer to current instruction) on the stack, and then
+  # move the instruction that the PC points to, into the a register. The
+  # stack looks like Figure IV at this point.
+  )a>[aa
+
+  # Is it the > instruction?
+  -$GREATER_THAN$a{=a
+     # Since it is the > instruction, we're going to increment the 
+     # memory pointer. However, we need to check and see if the pointer
+     # went past memory location 29,9999 (the 30,0000th location). To
+     # figure this out, we subtract 30,0000 from the b register. We 
+     # copy this result to the a register after saving it. The reason
+     # we do this is to perform an if-else. In the event that the
+     # pointer didn't go past the end of memory, we want to restore
+     # the value of b.
+     +1b
+     -$MAX_BF_MEM_CELLS$b)a>ba{+b
+         # We did go past the end and so we need to wrap to the
+         # beginning. Since memory location 1 stores the address
+         # of the beginning of memory, we take that value and move
+         # it to the b register.
+         >$ADDR_BF_MEM_START_PTR$b>[bb
+         # We need to break out of this loop, so we save the value
+         # of b and then make b negative. We also clear out the a
+         # register since we don't want to go into the 'else' portion
+         # of our if-else. The stack at this point looks like Figure I.
+         )b>$CLEAR$b-1b>$CLEAR$a
+     }
+     {-a
+         # Control comes to this part of the loop if we didn't go past
+         # the end of memory. Here, we add 30,000 to the b register so
+         # that we can get the original value of b. We then save it on
+         # to the stack. The reason we do this (even though b isn't
+         # being modified) is because the 'if' part of our if-else 
+         # pushes b onto the stack, and code that comes after the
+         # if-else expects b to be on the stack. We also clear the a
+         # register to break out of this loop. The stack at this point
+         # looks like Figure I.
+         +$MAX_BF_MEM_CELLS$b
+         )b>$CLEAR$a
+     }
+     (b(a
+     # Restore b
+     +$GREATER_THAN$a
+  }+$GREATER_THAN$a
+
+  # Is it the < instruction?
+  -$LESS_THAN$a{=a
+     # Since it is the < instruction, we are going to decrement the
+     # memory pointer. However, we need to check and see if the pointer
+     # went past the beginning of memory. To figure this out, we save the
+     # a register, and then load the address of the beginning of memory 
+     # from memory location 1 into the a register. We subtract this value
+     # from b and then copy the result into a as well (similar to the code
+     # handling the > instruction, we need an if-else here).
+     -1b
+      )a>$ADDR_BF_MEM_START_PTR$a>[aa
+      -ab>ba{-b
+        # Control comes here if b is negative. It means that we did decrement
+        # past the beginning of memory. So we need to set the b register to
+        # the end of memory. We do this by loading the address of the
+        # beginning of memory, and then adding 30,000 to it.
+        >$ADDR_BF_MEM_START_PTR$a>[aa
+        +MAX_BF_MEM_CELLSa>ab
+        # We need to break out of this loop, so we save the value
+        # of b and then make b negative. We also clear out the a
+        # register since we don't want to go into the 'else' portion
+        # of our if-else. The stack at this point looks like Figure I.
+        )b>$CLEAR$b>$CLEAR$a-1a
+      }
+      {+a
+       # Control comes here if a is greater than or equal to zero. Here, we
+       # restore the initial value of the b register (which serves as the
+       # brainfuck memory pointer) by loading the address of the beginning
+       # of memory and then adding it to the current value of the b register.
+       # Similar to the handling of the > instruction, we save b on to the
+       # stack since code that comes after this block expects the b register
+       # to be on the stack. We also set a to -1 to break out of our loop.
+       # The stack at this point looks like Figure I.
+       >$ADDR_BF_MEM_START_PTR$a>[aa+ab
+       )b>$CLEAR$a-1a
+      }
+      # Restore b and a
+      (b(a
+      +$LESS_THAN$a
+  }+$LESS_THAN$a
+
+  # Is it the + instruction?
+  -$PLUS$a{=a
+      # It is the + instruction so we need to increment the value
+      # that the brainfuck memory pointer points to.
+      +1[b
+      +$PLUS$a
+  }+$PLUS$a
+
+  # Is it the - instruction?
+  -$MINUS$a{=a
+      # It is the - instruction so we need to decrement the value
+      # that the brainfuck memory pointer points to.
+      -1[b
+      +$MINUS$a
+  }+$MINUS$a
+
+  # Is it the . instruction?
+  -$PERIOD$a{=a
+      # It is the . instruction so we need to output the value
+      # that the brainfuck memory pointer points to.
+      "[b
+      +$PERIOD$a
+  }+$PERIOD$a
+
+  # Is it the , instruction? 
+  -$COMMA$a{=a
+      # It is the , instruction so we need to input a character 
+      # into the location that the brainfuck memory pointer points
+      # to. First we save the a register. (See Figure III).
+      )a
+      # Then, we set a to 2, since that location contains the address
+      # of the next available input character. We load that value into
+      # memory. Since the value in a is a pointer, we move the value 
+      # that a points to, into the the location that the brainfuck
+      # memory pointer (b register) points to.
+      >$ADDR_NEXT_INPUT_CHAR_PTR$a>[aa
+      >[a[b
+      # Update the pointer at memory location 2 by incrementing it.
+      >$ADDR_NEXT_INPUT_CHAR_PTR$a+1[a
+      (a
+      +$COMMA$a
+  }+$COMMA$a
+
+  # Is it the [ instruction?
+  -$LEFT_SQUARE_BRACKET$a{=a
+      # It is the [ instruction so we need to see if value at the
+      # location pointed to by b is 0. To do that we save b on the
+      # stack. But we swap places to ensure that the PC (which is
+      # currently on the top) stays on the top and the pointer to
+      # brainfuck memory is second on the stack. We then load the 
+      # value of the location that the b register (brainfuck memory
+      # pointer) points into the b register. To understand what
+      # the stack looks like, look at Figure II and compare it to
+      # Figure III.
+      (a)b)a
+      >[bb
+      {=b
+        # If it is zero, then we need to find the matching ] and
+        # set the PC to the address of that instruction.  We're
+        # going to use our b register as a pointer to location 0
+        # to count ['s and ]'s. We clear b, and set location 0 to 1
+        # since we've already encounted a [. The loop will run as
+        # long as the value in memory location 0 is non-zero.
+        >$ADDR_COUNTER$b>$NON_ZERO$[b
+        {![b
+         # First we restore the PC, increment it and save it back
+         #  on the stack
+         (a+1a)a
+         # We take the instruction at the location pointed to by
+         # the a register and store it in the a register. We then  
+         # call the checkbrackets macro. The macro will automatically
+         # modify location 0 based on the value that is in the a
+         # register.
+         >[aa
+         &checkbrackets(a)
+        }
+        # When we break out of the loop, the value on the top of the
+        # stack is the address of the instruction past the matching
+        # ]. We need to decrement that value to point it to the 
+        # matching ] so that we can treat it as the "current"
+        # instruction and jump past it at the end of the loop.
+        (a-1a)a
+        # We set b to 1 to break out of the loop
+        >$NON_ZERO$b
+      }
+      # We restore the values of the memory pointer (b register)
+      # and the PC (a register).
+      (a(b)a
+      # At this point even if we didn't enter the above loop,
+      # the  top value on the stack still contains the address
+      # of a valid instruction. It is either the address if a [
+      # (the current instruction) or it is the address of a 
+      # matching ], which we'll still treat as a "current
+      # instruction".
+      +$LEFT_SQUARE_BRACKET$a
+  }+$LEFT_SQUARE_BRACKET$a
+
+  # Is it the ] instruction?
+  -$RIGHT_SQUARE_BRACKET$a{=a
+      # It is the ] instruction. There are two ways to handle
+      # this case. The easier way is to do a blind jump back 
+      # to the matching [. The smarter (faster) way is to check
+      # to see if the current brainfuck memory location is 
+      # non-zero. If it is, we jump back. Otherwise we keep going.
+      # As far as the stack is concerned, we re-arrange it in the
+      # same manner as the code that handles the [ instruction.
+      (a)b)a
+      # We copy the value that the brainfuck memory pointer points
+      # to, into the b register.
+      >[bb
+      {!b
+       # If the b register is nonzero, we need to find the matching
+       # [ and set the PC to instruction before the matching [.
+       # We're going to use the b register as a pointer to location 0
+       # to count ['s and ]'s. We set b to 0 and write -1 to location 0
+       # since we have counted one ] already
+       >$ADDR_COUNTER$b>$CLEAR$[b-1[b
+       {![b
+        # First we restore the PC, decrement it and save it back on
+        # the stack
+        (a-1a)a
+        # We take the instruction at the location pointed to by
+        # the a register and store it in the a register. We then  
+        # call the checkbrackets macro. The macro will automatically
+        # modify location 0 based on the value that is in the a
+        # register.
+        >[aa
+        &checkbrackets(a)
+       }
+       # When we break out of the loop, the value on the top of the
+       # stack is the address of the instruction preceding the 
+       # matching [. We don't need to adjust this value since this is
+       # what we want. We only clear out the b register to break out
+       # of the loop.
+       >$CLEAR$b
+      }
+      # We restore the values of the memory pointer (b register)
+      # and the PC (a register).
+      (a(b)a
+      # At this point, even if we didn't enter the above loop,
+      # the top value on the stack still contains the address
+      # of a valid instruction. It is either ], or the address
+      # of a matching [, which we'll still treat as a "current
+      # instruction".
+      +$RIGHT_SQUARE_BRACKET$a
+  }+$RIGHT_SQUARE_BRACKET$a
+
+  # We restore the PC from the stack and increment it so that 
+  # we now point to the next instruction.
+  (a+1a
+ }
+
+ # Control comes to this point when execution is done. We set a
+ # to 1 to break out of the loop, and clear b so that we don't
+ # enter the 'else' part of our if-else.
+ >$NON_ZERO$a 
+ >$CLEAR$b
+}
+{!b
+ # Control comes here if we don't have matching ['s and ]'s in
+ # our code. We print an error message ("Unmatched brackets")
+ # and exit.
+ "85"110"109"97"116"99"104"101"100"32"98"114"97"99"107"101"116"115
+ >$CLEAR$b
+}

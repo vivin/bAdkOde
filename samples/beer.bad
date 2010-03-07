@@ -1,0 +1,65 @@
+# Location 0 is going to contain our total number of beers
+>0a
+>99[a
+
+{![a
+ # Print the text "x bottles of beer on the wall!"
+ '[a"32"98"111"116"116"108"101
+ # if we have more than one beer, we need the "s" in "bottles"
+ )a
+ >[aa
+ -1a
+ {!a
+  "115
+  >0a
+ }
+ (a
+ "32"111"102"32"98"101"101"114"32"111"110"32"116"104"101"32"119"97"108"108"33"10
+
+ # Print the text "x bottles of beer!"
+ '[a"32"98"111"116"116"108"101
+ # if we have more than one beer, we need the "s" in "bottles"
+ )a
+ >[aa
+ -1a
+ {!a
+  "115
+  >0a
+ }
+ (a
+ "32"111"102"32"98"101"101"114"33"10
+
+ # Print the text "Take one down, pass it around!"
+ "84"97"107"101"32"111"110"101"32"100"111"119"110"44"32"112"97"115"115"32"105
+ "116"32"97"114"111"117"110"100"33"10
+
+ # Print the text "x bottles of beer on the wall!"
+ # if we have zero beers, then we need to print "No". Otherwise we print the number of beers.
+ -1[a
+ )a
+ >[aa
+ >ab
+ {=a
+  "78"111
+  >1a 
+ }
+ {!b
+  (a)a
+  '[a
+  >0b
+ }
+ (a
+
+ "32"98"111"116"116"108"101
+ # if we have more than one beer, we need the "s" in "bottles"
+ )a
+ >[aa
+ -1a
+ {!a
+  "115
+  >0a
+ }
+ (a
+ "32"111"102"32"98"101"101"114"32"111"110"32"116"104"101"32"119"97"108"108"33
+ "10"10
+}

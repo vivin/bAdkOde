@@ -1,0 +1,272 @@
+#
+# Define macros
+#
+
+
+@move(x, y)  = >xy;
+@add(x, y)   = +xy;
+@sub(x, y)   = -xy;
+@input(x)    = ?x;
+@print(x)    = 'x;
+@printchr(x) = "x;
+@push(x)     = )x;
+@pull(x)     = (x;
+@while(x)    = {x;
+@elihw()     = };
+
+
+#
+# 1000 is pointer to input number string.
+# 2000 is pointer to second number string.
+# 3000 is pointer to result string.
+# 0 holds our current position in first number string.
+# 1 holds our current position in second number string.
+# 2 holds our current position in the result string.
+# 3 holds counter for EOS. If it is equal to 2, then we've finished adding both strings.
+#
+
+&move(3000, a)
+&move(0, b)
+&sub(1, b)
+&move(b, [a)
+&sub(1, a)
+&move(2, b)
+&move(a, [b)
+
+
+&printchr(69)
+&printchr(110)
+&printchr(116)
+&printchr(101)
+&printchr(114)
+&printchr(32)
+&printchr(102)
+&printchr(105)
+&printchr(114)
+&printchr(115)
+&printchr(116)
+&printchr(32)
+&printchr(110)
+&printchr(117)
+&printchr(109)
+&printchr(98)
+&printchr(101)
+&printchr(114)
+&printchr(58)
+&printchr(32)
+
+
+&move(999, b)
+&move(0, a)
+&sub(1, a)
+&move(a, [b)
+&add(1, b)
+
+
+&while(!a)
+
+       &input(a)
+       &sub(48, a)
+       &move(a, [b)
+       &add(1, b)
+       &add(38, a)
+
+&elihw()
+
+
+&sub(2, b)
+&move(0, a)
+&move(b, [a)
+
+
+&printchr(10)
+&printchr(69)
+&printchr(110)
+&printchr(116)
+&printchr(101)
+&printchr(114)
+&printchr(32)
+&printchr(115)
+&printchr(101)
+&printchr(101)
+&printchr(99)
+&printchr(111)
+&printchr(110)
+&printchr(100)
+&printchr(32)
+&printchr(110)
+&printchr(117)
+&printchr(109)
+&printchr(98)
+&printchr(101)
+&printchr(114)
+&printchr(58)
+&printchr(32)
+
+
+&move(1999, b)
+&move(0, a)
+&sub(1, a)
+&move(a, [b)
+&add(1, b)
+
+
+&while(!a)
+
+       &input(a)
+       &sub(48, a)
+       &move(a, [b)
+       &add(1, b)
+       &add(38, a)
+
+&elihw()
+
+
+&sub(2, b)
+&move(1, a)
+&move(b, [a)
+
+&move(3, b)
+&move([b, b)
+&sub(2, b)
+&push(0)
+
+
+&while(!b)
+
+       &move(1, b)
+       &move([b, a)
+       &move([a, a)
+       &sub(1, [b)
+       &push(a)
+       &move(0, a)
+       &move([a, b)
+       &move([b, b)
+       &sub(1, [a)
+       &move(b, a)
+       &pull(b)
+ 
+       &while(-b)
+
+              &push(a)
+              &move(3, a)
+              &add(1, [a)
+              &move(0, b)
+              &pull(a)
+      
+       &elihw()
+
+  
+       &while(-a)
+
+              &push(b)
+              &move(3, b)
+              &add(1, [b)
+              &move(0, a)
+              &pull(b)
+
+       &elihw()
+
+
+       &add(a, b)
+       &pull(a)
+       &add(a, b)
+       &sub(10, b)
+       &push(1)
+
+
+       &while(-b)
+
+              &add(10, b)
+              &pull(a)
+              &push(0)
+       
+       &elihw()
+
+
+       &move(2, a)
+       &move([a, a)
+       &move(b, [a)
+       &move(2, a)
+       &sub(1, [a)
+       &move(3, b)
+       &move([b, b)
+       &sub(2, b)
+
+&elihw()
+
+
+&printchr(10)
+&printchr(84)
+&printchr(104)
+&printchr(101)
+&printchr(32)
+&printchr(115)
+&printchr(117)
+&printchr(109)
+&printchr(32)
+&printchr(111)
+&printchr(102)
+&printchr(32)
+
+&move(1000, a)
+&move([a, b)
+
+
+&while(+b)
+
+       &print(b)
+       &add(1, a)
+       &move([a, b)
+
+&elihw()
+
+&printchr(32)
+&printchr(97)
+&printchr(110)
+&printchr(100)
+&printchr(32)
+
+&move(2000, a)
+&move([a, b)
+
+
+&while(+b)
+     
+       &print(b)
+       &add(1, a)
+       &move([a, b)
+
+&elihw()
+
+
+&printchr(32)
+&printchr(105)
+&printchr(115)
+&printchr(58)
+&printchr(32)
+
+&move(2, a)
+&move([a, a)
+&add(1, a)
+
+&while(=[a)
+
+       &add(1, a)
+
+&elihw()
+
+
+&move([a, b)
+
+
+&while(+b)
+
+       &print(b)
+       &add(1, a)
+       &move([a, b)
+
+&elihw()
+
+
+&printchr(10) 
